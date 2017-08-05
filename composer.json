@@ -1,0 +1,34 @@
+{
+  "name": "setbased/abc-request-handler-core",
+  "description": "ABC-Framework: Core Request Handler",
+  "keywords": [
+    "ABC-Framework",
+    "Request",
+    "Handler",
+    "Core"
+  ],
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": ">=7.0.0",
+    "setbased/abc": "^0.10.1",
+    "setbased/abc-request-handler": "^0.9.0"
+  },
+  "require-dev": {
+    "phing/phing": "^2.0",
+    "setbased/php-stratum": "^0.9.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "SetBased\\Abc\\RequestHandler\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "SetBased\\Abc\\RequestHandler\\Test\\": "test/"
+    }
+  },
+  "config": {
+    "bin-dir": "bin"
+  }
+}
