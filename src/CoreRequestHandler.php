@@ -34,7 +34,6 @@ class CoreRequestHandler implements RequestHandler
 
     try
     {
-      Abc::$DL::connect(C::DB_HOSTNAME, C::DB_USERNAME, C::DB_PASSWORD, C::DB_DATABASE);
       Abc::$DL::begin();
 
       // Get the CGI variables from a clean URL.
@@ -42,6 +41,9 @@ class CoreRequestHandler implements RequestHandler
 
       // Retrieve the session or create an new session.
       Abc::$session->start();
+
+      // Initialize Babel.
+      Abc::$babel->setLanguage(Abc::$session->getLanId());
 
       // Test the user is authorized for the requested page.
       $this->checkAuthorization();
@@ -55,10 +57,8 @@ class CoreRequestHandler implements RequestHandler
       }
       catch (ResultException $e)
       {
-        if ($_SERVER['ABC_ENV']=='dev')
-        {
-          throw $e;
-        }
+        // On a development environment rethrow the exception.
+        if ($_SERVER['ABC_ENV']=='dev') throw $e;
 
         // A ResultException during the construction of a page object is (almost) always caused by an invalid URL.
         throw new InvalidUrlException('No data found', $e);
@@ -103,7 +103,6 @@ class CoreRequestHandler implements RequestHandler
     Abc::$requestLogger->logRequest(HttpHeader::$status);
 
     Abc::$DL->commit();
-    Abc::$DL->disconnect();
   }
 
   //--------------------------------------------------------------------------------------------------------------------
