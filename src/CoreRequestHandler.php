@@ -29,9 +29,6 @@ class CoreRequestHandler implements RequestHandler
    */
   public function handleRequest()
   {
-    // Start output buffering.
-    ob_start();
-
     try
     {
       Abc::$DL::begin();
@@ -67,20 +64,25 @@ class CoreRequestHandler implements RequestHandler
       // Perform addition authorization and security checks.
       $this->page->checkAuthorization();
 
-      $uri = $this->page->getPreferredUri();
-      if (isset($uri) && $uri!=$_SERVER['REQUEST_URI'])
+      if (Abc::$request->isAjax())
       {
-        // The preferred URI differs from the requested URI. Redirect the user agent to the preferred URL.
-        Abc::$DL->rollback();
-        HttpHeader::redirectMovedPermanently($uri);
+        // Echo the page content.
+        $this->page->echoXhrResponse();
       }
       else
       {
-        // Echo the page content.
-        $this->page->echoPage();
-
-        // Flush the page content.
-        if (ob_get_level()) ob_flush();
+        $uri = $this->page->getPreferredUri();
+        if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
+        {
+          // The preferred URI differs from the requested URI. Redirect the user agent to the preferred URL.
+          Abc::$DL->rollback();
+          HttpHeader::redirectMovedPermanently($uri);
+        }
+        else
+        {
+          // Echo the page content.
+          $this->page->echoPage();
+        }
       }
     }
     catch (NotAuthorizedException $e)
@@ -144,10 +146,10 @@ class CoreRequestHandler implements RequestHandler
     {
       // The user is not logged on and most likely the user has requested a page for which the user must be logged on.
       Abc::$DL->rollback();
+
       // Redirect the user agent to the login page. After the user has successfully logged on the user agent will be
       // redirected to currently requested URL.
-
-      HttpHeader::redirectSeeOther(Abc::getInstance()->getLoginUrl($_SERVER['REQUEST_URI']));
+      HttpHeader::redirectSeeOther(Abc::getInstance()->getLoginUrl(Abc::$request->getRequestUri()));
     }
     else
     {
