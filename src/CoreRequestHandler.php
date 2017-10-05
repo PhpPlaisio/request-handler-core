@@ -99,7 +99,7 @@ class CoreRequestHandler implements RequestHandler
     }
     catch (BadRequestException $e)
     {
-      // The request is invalid.
+      // The request is bad.
       $this->handleBadRequestException();
     }
     catch (\Throwable $e)
