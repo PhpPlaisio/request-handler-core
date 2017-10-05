@@ -4,6 +4,7 @@ namespace SetBased\Abc\RequestHandler;
 
 use SetBased\Abc\Abc;
 use SetBased\Abc\C;
+use SetBased\Abc\Error\BadRequestException;
 use SetBased\Abc\Error\InvalidUrlException;
 use SetBased\Abc\Error\NotAuthorizedException;
 use SetBased\Abc\Helper\HttpHeader;
@@ -24,6 +25,7 @@ class CoreRequestHandler implements RequestHandler
   private $page;
 
   //--------------------------------------------------------------------------------------------------------------------
+
   /**
    * {@inheritdoc}
    */
@@ -95,6 +97,11 @@ class CoreRequestHandler implements RequestHandler
       // The URL is invalid.
       $this->handleInvalidUrlException();
     }
+    catch (BadRequestException $e)
+    {
+      // The request is invalid.
+      $this->handleBadRequestException();
+    }
     catch (\Throwable $e)
     {
       // Some other exception has occurred.
@@ -105,6 +112,18 @@ class CoreRequestHandler implements RequestHandler
     Abc::$requestLogger->logRequest(HttpHeader::$status);
 
     Abc::$DL->commit();
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Handles a caught BadRequestException.
+   */
+  protected function handleBadRequestException()
+  {
+    Abc::$DL->rollback();
+
+    // Set the HTTP status to 400 (Bad Request).
+    HttpHeader::clientErrorBadRequest();
   }
 
   //--------------------------------------------------------------------------------------------------------------------
