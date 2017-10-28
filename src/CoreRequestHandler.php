@@ -4,9 +4,9 @@ namespace SetBased\Abc\RequestHandler;
 
 use SetBased\Abc\Abc;
 use SetBased\Abc\C;
-use SetBased\Abc\Error\BadRequestException;
-use SetBased\Abc\Error\InvalidUrlException;
-use SetBased\Abc\Error\NotAuthorizedException;
+use SetBased\Abc\Exception\BadRequestException;
+use SetBased\Abc\Exception\InvalidUrlException;
+use SetBased\Abc\Exception\NotAuthorizedException;
 use SetBased\Abc\Helper\HttpHeader;
 use SetBased\Abc\Page\Page;
 use SetBased\Stratum\Exception\ResultException;
@@ -25,7 +25,6 @@ class CoreRequestHandler implements RequestHandler
   private $page;
 
   //--------------------------------------------------------------------------------------------------------------------
-
   /**
    * {@inheritdoc}
    */
