@@ -3,7 +3,6 @@
 namespace SetBased\Abc\RequestHandler;
 
 use SetBased\Abc\Abc;
-use SetBased\Abc\C;
 use SetBased\Abc\Exception\BadRequestException;
 use SetBased\Abc\Exception\InvalidUrlException;
 use SetBased\Abc\Exception\NotAuthorizedException;
@@ -198,7 +197,7 @@ class CoreRequestHandler implements RequestHandler
     }
     else
     {
-      $pagId    = C::PAG_ID_INDEX;
+      $pagId    = Abc::getInstance()->getIndexPagId();
       $pagAlias = null;
     }
 
