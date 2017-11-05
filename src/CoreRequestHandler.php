@@ -45,9 +45,9 @@ class CoreRequestHandler implements RequestHandler
       // Test the user is authorized for the requested page.
       $this->checkAuthorization();
 
-      Abc::$assets->setPageTitle(Abc::getInstance()->pageInfo['pag_title']);
+      Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
 
-      $page_class = Abc::getInstance()->pageInfo['pag_class'];
+      $page_class = Abc::$abc->pageInfo['pag_class'];
       try
       {
         $this->page = new $page_class();
@@ -137,7 +137,7 @@ class CoreRequestHandler implements RequestHandler
     // Set the HTTP status to 500 (Internal Server Error).
     HttpHeader::serverErrorInternalServerError();
 
-    $logger = Abc::getInstance()->getErrorLogger();
+    $logger = Abc::$abc->getErrorLogger();
     $logger->logError($throwable);
   }
 
@@ -166,7 +166,7 @@ class CoreRequestHandler implements RequestHandler
 
       // Redirect the user agent to the login page. After the user has successfully logged on the user agent will be
       // redirected to currently requested URL.
-      HttpHeader::redirectSeeOther(Abc::getInstance()->getLoginUrl(Abc::$request->getRequestUri()));
+      HttpHeader::redirectSeeOther(Abc::$abc->getLoginUrl(Abc::$request->getRequestUri()));
     }
     else
     {
@@ -197,16 +197,16 @@ class CoreRequestHandler implements RequestHandler
     }
     else
     {
-      $pagId    = Abc::getInstance()->getIndexPagId();
+      $pagId    = Abc::$abc->getIndexPagId();
       $pagAlias = null;
     }
 
-    Abc::getInstance()->pageInfo = Abc::$DL->abcAuthGetPageInfo(Abc::$session->getCmpId(),
-                                                                $pagId,
-                                                                Abc::$session->getProId(),
-                                                                Abc::$session->getLanId(),
-                                                                $pagAlias);
-    if (Abc::getInstance()->pageInfo===null)
+    Abc::$abc->pageInfo = Abc::$DL->abcAuthGetPageInfo(Abc::$session->getCmpId(),
+                                                       $pagId,
+                                                       Abc::$session->getProId(),
+                                                       Abc::$session->getLanId(),
+                                                       $pagAlias);
+    if (Abc::$abc->pageInfo===null)
     {
       if ($pagId!==null)
       {

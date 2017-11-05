@@ -11,7 +11,7 @@
   "license": "MIT",
   "require": {
     "php": ">=7.0.0",
-    "setbased/abc": "^0.10.17",
+    "setbased/abc": "^0.10.18",
     "setbased/abc-exception": "^1.0.0",
     "setbased/abc-request-handler": "^1.0.0"
   },
