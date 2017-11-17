@@ -201,7 +201,7 @@ class CoreRequestHandler implements RequestHandler
       $pagAlias = null;
     }
 
-    Abc::$abc->pageInfo = Abc::$DL->abcAuthGetPageInfo(Abc::$session->getCmpId(),
+    Abc::$abc->pageInfo = Abc::$DL->abcAuthGetPageInfo(Abc::$companyResolver->getCmpId(),
                                                        $pagId,
                                                        Abc::$session->getProId(),
                                                        Abc::$session->getLanId(),
