@@ -84,6 +84,8 @@ class CoreRequestHandler implements RequestHandler
           $this->page->echoPage();
         }
       }
+
+      Abc::$session->save();
     }
     catch (NotAuthorizedException $e)
     {
@@ -106,9 +108,7 @@ class CoreRequestHandler implements RequestHandler
       $this->handleException($e);
     }
 
-    Abc::$session->save();
     Abc::$requestLogger->logRequest(HttpHeader::$status);
-
     Abc::$DL->commit();
   }
 
