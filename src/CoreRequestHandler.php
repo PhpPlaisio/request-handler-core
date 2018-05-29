@@ -208,19 +208,17 @@ class CoreRequestHandler implements RequestHandler
                                                        $pagAlias);
     if (Abc::$abc->pageInfo===null)
     {
-      if ($pagId!==null)
-      {
-        throw new NotAuthorizedException('User %d is not authorized for page ID=%d.',
-                                         Abc::$session->getUsrId(),
-                                         $pagId);
-      }
-      else
-      {
-        throw new NotAuthorizedException("User %d is not authorized for page alias='%s'.",
-                                         Abc::$session->getUsrId(),
-                                         $pagAlias);
-      }
+      // Requested page does not exists.
+      throw new InvalidUrlException();
     }
+
+    if (Abc::$abc->pageInfo['authorized']==0)
+    {
+      // Requested page does exists but the user agent is not authorized for the requested page.
+      throw new NotAuthorizedException();
+    }
+
+    // Page does exists and the user agent is authorized.
   }
 
   //--------------------------------------------------------------------------------------------------------------------
