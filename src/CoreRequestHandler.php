@@ -1,5 +1,5 @@
 <?php
-//----------------------------------------------------------------------------------------------------------------------
+
 namespace SetBased\Abc\RequestHandler;
 
 use SetBased\Abc\Abc;
@@ -27,7 +27,7 @@ class CoreRequestHandler implements RequestHandler
   /**
    * {@inheritdoc}
    */
-  public function handleRequest()
+  public function handleRequest(): void
   {
     try
     {
@@ -116,7 +116,7 @@ class CoreRequestHandler implements RequestHandler
   /**
    * Handles a caught BadRequestException.
    */
-  protected function handleBadRequestException()
+  protected function handleBadRequestException(): void
   {
     Abc::$DL->rollback();
 
@@ -130,7 +130,7 @@ class CoreRequestHandler implements RequestHandler
    *
    * @param \Throwable $throwable The caught \Throwable.
    */
-  protected function handleException($throwable)
+  protected function handleException(\Throwable $throwable): void
   {
     Abc::$DL->rollback();
 
@@ -145,7 +145,7 @@ class CoreRequestHandler implements RequestHandler
   /**
    * Handles a caught InvalidUrlException.
    */
-  protected function handleInvalidUrlException()
+  protected function handleInvalidUrlException(): void
   {
     Abc::$DL->rollback();
 
@@ -157,7 +157,7 @@ class CoreRequestHandler implements RequestHandler
   /**
    * Handles a caught NotAuthorizedException.
    */
-  protected function handleNotAuthorizedException()
+  protected function handleNotAuthorizedException(): void
   {
     if (Abc::$session->isAnonymous())
     {
@@ -183,7 +183,7 @@ class CoreRequestHandler implements RequestHandler
    * Retrieves information about the requested page and checks if the user has the correct authorization for the
    * requested page.
    */
-  private function checkAuthorization()
+  private function checkAuthorization(): void
   {
     if (isset($_GET['pag']))
     {

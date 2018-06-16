@@ -10,11 +10,12 @@
   "type": "library",
   "license": "MIT",
   "require": {
-    "php": ">=7.0.0",
+    "php": ">=7.1.0",
     "setbased/abc": "^0.10.21",
     "setbased/abc-exception": "^1.0.0",
+    "setbased/abc-http-header": "2.0.0",
     "setbased/abc-page": "^0.9.0",
-    "setbased/abc-request-handler": "^1.0.0",
+    "setbased/abc-request-handler": "^2.0.0",
     "setbased/php-stratum": "^0.9.0"
   },
   "require-dev": {
