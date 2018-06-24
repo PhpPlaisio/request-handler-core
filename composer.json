@@ -11,12 +11,12 @@
   "license": "MIT",
   "require": {
     "php": ">=7.1.0",
-    "setbased/abc": "^0.10.21",
+    "setbased/abc": "*",
     "setbased/abc-exception": "^1.0.0",
     "setbased/abc-http-header": "2.0.0",
-    "setbased/abc-page": "^0.9.0",
-    "setbased/abc-request-handler": "^2.0.0",
-    "setbased/php-stratum": "^0.9.0"
+    "setbased/abc-page": "*",
+    "setbased/abc-request-handler": "^3.0.0",
+    "setbased/php-stratum": "*"
   },
   "require-dev": {
     "phing/phing": "^2.0.0"

@@ -17,6 +17,13 @@ class CoreRequestHandler implements RequestHandler
 {
   //--------------------------------------------------------------------------------------------------------------------
   /**
+   * The ID of the page currently requested.
+   *
+   * @var int
+   */
+  private $pagId;
+
+  /**
    * The page object.
    *
    * @var Page
@@ -25,7 +32,24 @@ class CoreRequestHandler implements RequestHandler
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * {@inheritdoc}
+   * Returns the ID of the page currently requested.
+   *
+   * @return int
+   *
+   * @api
+   * @since 3.0.0
+   */
+  public function getPagId(): int
+  {
+    return $this->getPagId();
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Handles a page request.
+   *
+   * @api
+   * @since 1.0.0
    */
   public function handleRequest(): void
   {
@@ -201,24 +225,29 @@ class CoreRequestHandler implements RequestHandler
       $pagAlias = null;
     }
 
-    Abc::$abc->pageInfo = Abc::$DL->abcAuthGetPageInfo(Abc::$companyResolver->getCmpId(),
-                                                       $pagId,
-                                                       Abc::$session->getProId(),
-                                                       Abc::$session->getLanId(),
-                                                       $pagAlias);
-    if (Abc::$abc->pageInfo===null)
+    $info = Abc::$DL->abcAuthGetPageInfo(Abc::$companyResolver->getCmpId(),
+                                         $pagId,
+                                         Abc::$session->getProId(),
+                                         Abc::$session->getLanId(),
+                                         $pagAlias);
+    if ($info===null)
     {
       // Requested page does not exists.
       throw new InvalidUrlException();
     }
 
-    if (Abc::$abc->pageInfo['authorized']==0)
+    if ($info['authorized']==0)
     {
       // Requested page does exists but the user agent is not authorized for the requested page.
       throw new NotAuthorizedException();
     }
 
+    Abc::$abc->pageInfo = $info;
+
     // Page does exists and the user agent is authorized.
+
+
+    $this->pagId = $info['pag_id'];
   }
 
   //--------------------------------------------------------------------------------------------------------------------
