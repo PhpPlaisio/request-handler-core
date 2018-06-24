@@ -41,7 +41,7 @@ class CoreRequestHandler implements RequestHandler
    */
   public function getPagId(): int
   {
-    return $this->getPagId();
+    return $this->pagId;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
