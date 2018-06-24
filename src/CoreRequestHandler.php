@@ -79,7 +79,7 @@ class CoreRequestHandler implements RequestHandler
       catch (ResultException $e)
       {
         // On a development environment rethrow the exception.
-        if ($_SERVER['ABC_ENV']=='dev') throw $e;
+        if (Abc::$request->isEnvDev()) throw $e;
 
         // A ResultException during the construction of a page object is (almost) always caused by an invalid URL.
         throw new InvalidUrlException('No data found', $e);
