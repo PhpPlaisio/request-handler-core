@@ -19,7 +19,7 @@ class CoreRequestHandler implements RequestHandler
   /**
    * The ID of the page currently requested.
    *
-   * @var int
+   * @var int|null
    */
   private $pagId;
 
@@ -39,7 +39,7 @@ class CoreRequestHandler implements RequestHandler
    * @api
    * @since 3.0.0
    */
-  public function getPagId(): int
+  public function getPagId(): ?int
   {
     return $this->pagId;
   }
@@ -236,6 +236,8 @@ class CoreRequestHandler implements RequestHandler
       throw new InvalidUrlException();
     }
 
+    $this->pagId = $info['pag_id'];
+
     if ($info['authorized']==0)
     {
       // Requested page does exists but the user agent is not authorized for the requested page.
@@ -245,9 +247,6 @@ class CoreRequestHandler implements RequestHandler
     Abc::$abc->pageInfo = $info;
 
     // Page does exists and the user agent is authorized.
-
-
-    $this->pagId = $info['pag_id'];
   }
 
   //--------------------------------------------------------------------------------------------------------------------
