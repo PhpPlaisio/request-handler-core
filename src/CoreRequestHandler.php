@@ -114,17 +114,17 @@ class CoreRequestHandler implements RequestHandler
     catch (NotAuthorizedException $e)
     {
       // The user has no authorization for the requested URL.
-      $this->handleNotAuthorizedException();
+      $this->handleNotAuthorizedException($e);
     }
     catch (InvalidUrlException $e)
     {
       // The URL is invalid.
-      $this->handleInvalidUrlException();
+      $this->handleInvalidUrlException($e);
     }
     catch (BadRequestException $e)
     {
       // The request is bad.
-      $this->handleBadRequestException();
+      $this->handleBadRequestException($e);
     }
     catch (\Throwable $e)
     {
@@ -139,13 +139,22 @@ class CoreRequestHandler implements RequestHandler
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Handles a caught BadRequestException.
+   *
+   * @param \Throwable $throwable The caught \Throwable.
    */
-  protected function handleBadRequestException(): void
+  protected function handleBadRequestException(\Throwable $throwable): void
   {
     Abc::$DL->rollback();
 
     // Set the HTTP status to 400 (Bad Request).
     HttpHeader::clientErrorBadRequest();
+
+    // Only on development environment log the error.
+    if (Abc::$request->isEnvDev())
+    {
+      $logger = Abc::$abc->getErrorLogger();
+      $logger->logError($throwable);
+    }
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -168,20 +177,31 @@ class CoreRequestHandler implements RequestHandler
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Handles a caught InvalidUrlException.
+   *
+   * @param \Throwable $throwable The caught \Throwable.
    */
-  protected function handleInvalidUrlException(): void
+  protected function handleInvalidUrlException(\Throwable $throwable): void
   {
     Abc::$DL->rollback();
 
     // Set the HTTP status to 404 (Not Found).
     HttpHeader::clientErrorNotFound();
+
+    // Only on development environment log the error.
+    if (Abc::$request->isEnvDev())
+    {
+      $logger = Abc::$abc->getErrorLogger();
+      $logger->logError($throwable);
+    }
   }
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Handles a caught NotAuthorizedException.
+   *
+   * @param \Throwable $throwable The caught \Throwable.
    */
-  protected function handleNotAuthorizedException(): void
+  protected function handleNotAuthorizedException(\Throwable $throwable): void
   {
     if (Abc::$session->isAnonymous())
     {
@@ -199,6 +219,13 @@ class CoreRequestHandler implements RequestHandler
 
       // Set the HTTP status to 404 (Not Found).
       HttpHeader::clientErrorNotFound();
+
+      // Only on development environment log the error.
+      if (Abc::$request->isEnvDev())
+      {
+        $logger = Abc::$abc->getErrorLogger();
+        $logger->logError($throwable);
+      }
     }
   }
 
