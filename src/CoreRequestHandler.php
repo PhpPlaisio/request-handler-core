@@ -236,19 +236,17 @@ class CoreRequestHandler implements RequestHandler
    */
   private function checkAuthorization(): void
   {
-    if (isset($_GET['pag']))
+    $pagId = Abc::$cgi->getOptId('pag', 'pag');
+    if ($pagId===null)
     {
-      $pagId    = Abc::deObfuscate($_GET['pag'], 'pag');
-      $pagAlias = null;
-    }
-    else if (isset($_GET['pag_alias']))
-    {
-      $pagId    = null;
-      $pagAlias = $_GET['pag_alias'];
+      $pagAlias = Abc::$cgi->getOptString('pag_alias');
+      if ($pagAlias===null)
+      {
+        $pagId = Abc::$abc->getIndexPagId();
+      }
     }
     else
     {
-      $pagId    = Abc::$abc->getIndexPagId();
       $pagAlias = null;
     }
 
