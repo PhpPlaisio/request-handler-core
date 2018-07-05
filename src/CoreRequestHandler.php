@@ -257,8 +257,7 @@ class CoreRequestHandler implements RequestHandler
                                          $pagAlias);
     if ($info===null)
     {
-      // Requested page does not exists.
-      throw new InvalidUrlException();
+      throw new InvalidUrlException('Page does not exists');
     }
 
     $this->pagId = $info['pag_id'];
@@ -266,7 +265,7 @@ class CoreRequestHandler implements RequestHandler
     if ($info['authorized']==0)
     {
       // Requested page does exists but the user agent is not authorized for the requested page.
-      throw new NotAuthorizedException();
+      throw new NotAuthorizedException('Not authorized for requested page');
     }
 
     Abc::$abc->pageInfo = $info;
