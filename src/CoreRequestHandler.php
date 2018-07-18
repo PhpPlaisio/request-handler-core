@@ -6,8 +6,10 @@ use SetBased\Abc\Abc;
 use SetBased\Abc\Exception\BadRequestException;
 use SetBased\Abc\Exception\InvalidUrlException;
 use SetBased\Abc\Exception\NotAuthorizedException;
+use SetBased\Abc\Exception\NotPreferredUrlException;
 use SetBased\Abc\Helper\HttpHeader;
 use SetBased\Abc\Page\Page;
+use SetBased\Exception\FallenException;
 use SetBased\Stratum\Exception\ResultException;
 
 /**
@@ -16,6 +18,13 @@ use SetBased\Stratum\Exception\ResultException;
 class CoreRequestHandler implements RequestHandler
 {
   //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * The light weight event dispatcher.
+   *
+   * @var AdHocEventDispatcher
+   */
+  private $adHocEventDispatcher;
+
   /**
    * The ID of the page currently requested.
    *
@@ -32,12 +41,52 @@ class CoreRequestHandler implements RequestHandler
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
+   * CoreRequestHandler constructor.
+   */
+  public function __construct()
+  {
+    $this->adHocEventDispatcher = new AdHocEventDispatcher();
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Adds a listener that must be notified when an event occurs.
+   *
+   * The following events are implemented:
+   * <ul>
+   * <li> post_render: This event occurs after a page requested has been successfully handled.
+   * <li> post_commit: This event occurs after a page requested has been handled and the database transaction has been
+   *                   committed. The listener CAN NOT access the database or session data.
+   * </ul>
+   *
+   * @param string   $event    The name of the event.
+   * @param callable $listener The listener that must be notified when the event occurs.
+   *
+   * @api
+   * @since 1.0.0
+   */
+  public function addListener(string $event, callable $listener): void
+  {
+    switch ($event)
+    {
+      case 'post_render':
+      case 'post_commit':
+        $this->adHocEventDispatcher->addListener($this, $event, $listener);
+        break;
+
+      default:
+        throw new FallenException('event', $event);
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
    * Returns the ID of the page currently requested.
    *
    * @return int|null
    *
    * @api
-   * @since 3.0.0
+   * @since 1.0.0
    */
   public function getPagId(): ?int
   {
@@ -71,78 +120,84 @@ class CoreRequestHandler implements RequestHandler
 
       Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
 
-      $page_class = Abc::$abc->pageInfo['pag_class'];
+      $class = Abc::$abc->pageInfo['pag_class'];
       try
       {
-        $this->page = new $page_class();
+        $this->page = new $class();
       }
-      catch (ResultException $e)
+      catch (ResultException $exception)
       {
         // On a development environment rethrow the exception.
-        if (Abc::$request->isEnvDev()) throw $e;
+        if (Abc::$request->isEnvDev()) throw $exception;
 
         // A ResultException during the construction of a page object is (almost) always caused by an invalid URL.
-        throw new InvalidUrlException('No data found', $e);
+        throw new InvalidUrlException('No data found', $exception);
       }
 
       // Perform addition authorization and security checks.
       $this->page->checkAuthorization();
 
+      // Test for preferred URI.
+      $uri = $this->page->getPreferredUri();
+      if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
+      {
+        // The preferred URI differs from the requested URI.
+        throw new NotPreferredUrlException($uri);
+      }
+
+      // Echo the page content.
       if (Abc::$request->isAjax())
       {
-        // Echo the page content.
         $this->page->echoXhrResponse();
       }
       else
       {
-        $uri = $this->page->getPreferredUri();
-        if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
-        {
-          // The preferred URI differs from the requested URI. Redirect the user agent to the preferred URL.
-          Abc::$DL->rollback();
-          HttpHeader::redirectMovedPermanently($uri);
-        }
-        else
-        {
-          // Echo the page content.
-          $this->page->echoPage();
-        }
+        $this->page->echoPage();
       }
+
+      $this->adHocEventDispatcher->notify($this, 'post_render');
 
       Abc::$session->save();
     }
-    catch (NotAuthorizedException $e)
+    catch (NotAuthorizedException $exception)
     {
       // The user has no authorization for the requested URL.
-      $this->handleNotAuthorizedException($e);
+      $this->handleNotAuthorizedException($exception);
     }
-    catch (InvalidUrlException $e)
+    catch (InvalidUrlException $exception)
     {
       // The URL is invalid.
-      $this->handleInvalidUrlException($e);
+      $this->handleInvalidUrlException($exception);
     }
-    catch (BadRequestException $e)
+    catch (BadRequestException $exception)
     {
       // The request is bad.
-      $this->handleBadRequestException($e);
+      $this->handleBadRequestException($exception);
     }
-    catch (\Throwable $e)
+    catch (NotPreferredUrlException $exception)
+    {
+      // The request is bad.
+      $this->handleNotPreferredUrlException($exception);
+    }
+    catch (\Throwable $exception)
     {
       // Some other exception has occurred.
-      $this->handleException($e);
+      $this->handleException($exception);
     }
 
     Abc::$requestLogger->logRequest(HttpHeader::$status);
     Abc::$DL->commit();
+
+    $this->adHocEventDispatcher->notify($this, 'post_commit');
   }
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Handles a caught BadRequestException.
    *
-   * @param \Throwable $throwable The caught \Throwable.
+   * @param BadRequestException $exception The caught exception.
    */
-  protected function handleBadRequestException(\Throwable $throwable): void
+  protected function handleBadRequestException(BadRequestException $exception): void
   {
     Abc::$DL->rollback();
 
@@ -153,7 +208,7 @@ class CoreRequestHandler implements RequestHandler
     if (Abc::$request->isEnvDev())
     {
       $logger = Abc::$abc->getErrorLogger();
-      $logger->logError($throwable);
+      $logger->logError($exception);
     }
   }
 
@@ -178,9 +233,9 @@ class CoreRequestHandler implements RequestHandler
   /**
    * Handles a caught InvalidUrlException.
    *
-   * @param \Throwable $throwable The caught \Throwable.
+   * @param InvalidUrlException $exception The caught exception.
    */
-  protected function handleInvalidUrlException(\Throwable $throwable): void
+  protected function handleInvalidUrlException(InvalidUrlException $exception): void
   {
     Abc::$DL->rollback();
 
@@ -191,7 +246,7 @@ class CoreRequestHandler implements RequestHandler
     if (Abc::$request->isEnvDev())
     {
       $logger = Abc::$abc->getErrorLogger();
-      $logger->logError($throwable);
+      $logger->logError($exception);
     }
   }
 
@@ -199,9 +254,9 @@ class CoreRequestHandler implements RequestHandler
   /**
    * Handles a caught NotAuthorizedException.
    *
-   * @param \Throwable $throwable The caught \Throwable.
+   * @param NotAuthorizedException $exception The caught exception.
    */
-  protected function handleNotAuthorizedException(\Throwable $throwable): void
+  protected function handleNotAuthorizedException(NotAuthorizedException $exception): void
   {
     if (Abc::$session->isAnonymous())
     {
@@ -224,9 +279,23 @@ class CoreRequestHandler implements RequestHandler
       if (Abc::$request->isEnvDev())
       {
         $logger = Abc::$abc->getErrorLogger();
-        $logger->logError($throwable);
+        $logger->logError($exception);
       }
     }
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Handles a caught NotPreferredUrlException.
+   *
+   * @param NotPreferredUrlException $exception The caught exception.
+   */
+  protected function handleNotPreferredUrlException(NotPreferredUrlException $exception): void
+  {
+    Abc::$DL->rollback();
+
+    // Redirect the user agent to the preferred URL.
+    HttpHeader::redirectMovedPermanently($exception->preferredUri);
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -269,7 +338,6 @@ class CoreRequestHandler implements RequestHandler
     }
 
     Abc::$abc->pageInfo = $info;
-
     // Page does exists and the user agent is authorized.
   }
 
