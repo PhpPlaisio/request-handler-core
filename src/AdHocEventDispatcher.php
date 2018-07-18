@@ -46,7 +46,7 @@ class AdHocEventDispatcher
    */
   public function addListener($emitter, string $event, callable $callable)
   {
-    $id = spl_object_id($emitter);
+    $id = \spl_object_hash($emitter);
     if (!isset($this->listeners[$id]))
     {
       $this->listeners[$id] = [];
@@ -69,7 +69,7 @@ class AdHocEventDispatcher
    */
   public function notify($emitter, string $event): void
   {
-    $this->queue->enqueue(['id' => spl_object_id($emitter), 'emitter' => $emitter, 'event' => $event]);
+    $this->queue->enqueue(['id' => \spl_object_hash($emitter), 'emitter' => $emitter, 'event' => $event]);
     $this->dispatch();
   }
 
