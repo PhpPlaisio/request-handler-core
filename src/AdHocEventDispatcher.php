@@ -92,7 +92,7 @@ class AdHocEventDispatcher
       {
         foreach ($this->listeners[$event['id']][$event['event']] as $callable)
         {
-          $callable();
+          call_user_func($callable);
         }
       }
     }
