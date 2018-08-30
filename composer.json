@@ -13,7 +13,7 @@
     "php": ">=7.1.0",
     "setbased/abc": "*",
     "setbased/abc-exception": "^1.1.0",
-    "setbased/abc-http-header": "2.0.0",
+    "setbased/abc-http-header": "^2.0.0",
     "setbased/abc-page": "*",
     "setbased/abc-request-handler": "*",
     "setbased/php-stratum": "*"
