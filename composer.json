@@ -15,7 +15,7 @@
     "setbased/abc-exception": "^1.1.0",
     "setbased/abc-http-header": "^2.0.0",
     "setbased/abc-page": "*",
-    "setbased/abc-request-handler": "*",
+    "setbased/abc-request-handler": "^3.0.0",
     "setbased/php-stratum": "*"
   },
   "require-dev": {

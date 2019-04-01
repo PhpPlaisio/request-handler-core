@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace SetBased\Abc\RequestHandler;
 
 use SetBased\Abc\Abc;
-use SetBased\Abc\Exception\BadRequestException;
 use SetBased\Abc\Exception\InvalidUrlException;
 use SetBased\Abc\Exception\NotAuthorizedException;
 use SetBased\Abc\Exception\NotPreferredUrlException;
 use SetBased\Abc\Helper\HttpHeader;
 use SetBased\Abc\Page\Page;
 use SetBased\Exception\FallenException;
-use SetBased\Stratum\Exception\ResultException;
 
 /**
  * Core request handler.
@@ -105,198 +103,43 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      Abc::$DL::begin();
-
-      // Get the CGI variables from a clean URL.
-      Abc::$requestParameterResolver->resolveRequestParameters();
-
-      // Retrieve the session or create an new session.
-      Abc::$session->start();
-
-      // Initialize Babel.
-      Abc::$babel->setLanguage(Abc::$session->getLanId());
-
-      // Test the user is authorized for the requested page.
-      $this->checkAuthorization();
-
-      Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
-
-      $class = Abc::$abc->pageInfo['pag_class'];
       try
       {
-        $this->page = new $class();
+        $this->prepare();
       }
-      catch (ResultException $exception)
+      catch (\Throwable $exception)
       {
-        // On a development environment rethrow the exception.
-        if (Abc::$request->isEnvDev()) throw $exception;
-
-        // A ResultException during the construction of a page object is (almost) always caused by an invalid URL.
-        throw new InvalidUrlException('No data found', $exception);
+        $handler = Abc::$abc->getExceptionHandler();
+        $handler->handlePrepareException($exception);
       }
 
-      // Perform addition authorization and security checks.
-      $this->page->checkAuthorization();
-
-      // Test for preferred URI.
-      $uri = $this->page->getPreferredUri();
-      if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
+      try
       {
-        // The preferred URI differs from the requested URI.
-        throw new NotPreferredUrlException($uri);
+        $this->construct();
       }
-
-      // Echo the page content.
-      if (Abc::$request->isAjax())
+      catch (\Throwable $exception)
       {
-        $this->page->echoXhrResponse();
-      }
-      else
-      {
-        $this->page->echoPage();
+        $handler = Abc::$abc->getExceptionHandler();
+        $handler->handleConstructException($exception);
       }
 
-      $this->adHocEventDispatcher->notify($this, 'post_render');
-
-      Abc::$session->save();
-    }
-    catch (NotAuthorizedException $exception)
-    {
-      // The user has no authorization for the requested URL.
-      $this->handleNotAuthorizedException($exception);
-    }
-    catch (InvalidUrlException $exception)
-    {
-      // The URL is invalid.
-      $this->handleInvalidUrlException($exception);
-    }
-    catch (BadRequestException $exception)
-    {
-      // The request is bad.
-      $this->handleBadRequestException($exception);
-    }
-    catch (NotPreferredUrlException $exception)
-    {
-      // The request is bad.
-      $this->handleNotPreferredUrlException($exception);
+      $this->response();
     }
     catch (\Throwable $exception)
     {
-      // Some other exception has occurred.
-      $this->handleException($exception);
+      $handler = Abc::$abc->getExceptionHandler();
+      $handler->handleResponseException($exception);
     }
 
-    Abc::$requestLogger->logRequest(HttpHeader::$status);
-    Abc::$DL->commit();
-
-    $this->adHocEventDispatcher->notify($this, 'post_commit');
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-  /**
-   * Handles a caught BadRequestException.
-   *
-   * @param BadRequestException $exception The caught exception.
-   */
-  protected function handleBadRequestException(BadRequestException $exception): void
-  {
-    Abc::$DL->rollback();
-
-    // Set the HTTP status to 400 (Bad Request).
-    HttpHeader::clientErrorBadRequest();
-
-    // Only on development environment log the error.
-    if (Abc::$request->isEnvDev())
+    try
     {
-      $logger = Abc::$abc->getErrorLogger();
-      $logger->logError($exception);
+      $this->finalize();
     }
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-  /**
-   * Handles any other caught exception.
-   *
-   * @param \Throwable $throwable The caught \Throwable.
-   */
-  protected function handleException(\Throwable $throwable): void
-  {
-    Abc::$DL->rollback();
-
-    // Set the HTTP status to 500 (Internal Server Error).
-    HttpHeader::serverErrorInternalServerError();
-
-    $logger = Abc::$abc->getErrorLogger();
-    $logger->logError($throwable);
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-  /**
-   * Handles a caught InvalidUrlException.
-   *
-   * @param InvalidUrlException $exception The caught exception.
-   */
-  protected function handleInvalidUrlException(InvalidUrlException $exception): void
-  {
-    Abc::$DL->rollback();
-
-    // Set the HTTP status to 404 (Not Found).
-    HttpHeader::clientErrorNotFound();
-
-    // Only on development environment log the error.
-    if (Abc::$request->isEnvDev())
+    catch (\Throwable $exception)
     {
-      $logger = Abc::$abc->getErrorLogger();
-      $logger->logError($exception);
+      $handler = Abc::$abc->getExceptionHandler();
+      $handler->handleFinalizeException($exception);
     }
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-  /**
-   * Handles a caught NotAuthorizedException.
-   *
-   * @param NotAuthorizedException $exception The caught exception.
-   */
-  protected function handleNotAuthorizedException(NotAuthorizedException $exception): void
-  {
-    if (Abc::$session->isAnonymous())
-    {
-      // The user is not logged on and most likely the user has requested a page for which the user must be logged on.
-      Abc::$DL->rollback();
-
-      // Redirect the user agent to the login page. After the user has successfully logged on the user agent will be
-      // redirected to currently requested URL.
-      HttpHeader::redirectSeeOther(Abc::$abc->getLoginUrl(Abc::$request->getRequestUri()));
-    }
-    else
-    {
-      // The user is logged on and the user has requested an URL for which the user has no authorization.
-      Abc::$DL->rollback();
-
-      // Set the HTTP status to 404 (Not Found).
-      HttpHeader::clientErrorNotFound();
-
-      // Only on development environment log the error.
-      if (Abc::$request->isEnvDev())
-      {
-        $logger = Abc::$abc->getErrorLogger();
-        $logger->logError($exception);
-      }
-    }
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-  /**
-   * Handles a caught NotPreferredUrlException.
-   *
-   * @param NotPreferredUrlException $exception The caught exception.
-   */
-  protected function handleNotPreferredUrlException(NotPreferredUrlException $exception): void
-  {
-    Abc::$DL->rollback();
-
-    // Redirect the user agent to the preferred URL.
-    HttpHeader::redirectMovedPermanently($exception->preferredUri);
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -340,6 +183,83 @@ class CoreRequestHandler implements RequestHandler
 
     Abc::$abc->pageInfo = $info;
     // Page does exists and the user agent is authorized.
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Contruct phase: creating the Page object.
+   */
+  private function construct(): void
+  {
+    $class      = Abc::$abc->pageInfo['pag_class'];
+    $this->page = new $class();
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * All action after generating the response by the Page object.
+   */
+  private function finalize(): void
+  {
+    Abc::$requestLogger->logRequest(HttpHeader::$status);
+    Abc::$DL->commit();
+
+    $this->adHocEventDispatcher->notify($this, 'post_commit');
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Preparation phase: all actions before creating the Page object.
+   */
+  private function prepare(): void
+  {
+    Abc::$DL::begin();
+
+    // Get the CGI variables from a clean URL.
+    Abc::$requestParameterResolver->resolveRequestParameters();
+
+    // Retrieve the session or create an new session.
+    Abc::$session->start();
+
+    // Initialize Babel.
+    Abc::$babel->setLanguage(Abc::$session->getLanId());
+
+    // Test the user is authorized for the requested page.
+    $this->checkAuthorization();
+
+    Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Response phase: generating the response by the Page object.
+   */
+  private function response(): void
+  {
+    // Perform additional authorization and security checks.
+    $this->page->checkAuthorization();
+
+    // Test for preferred URI.
+    $uri = $this->page->getPreferredUri();
+    if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
+    {
+      // The preferred URI differs from the requested URI.
+      throw new NotPreferredUrlException($uri);
+    }
+
+    // Echo the page content.
+    if (Abc::$request->isAjax())
+    {
+      $this->page->echoXhrResponse();
+    }
+    else
+    {
+      $this->page->echoPage();
+    }
+
+    $this->adHocEventDispatcher->notify($this, 'post_render');
+
+    Abc::$session->save();
   }
 
   //--------------------------------------------------------------------------------------------------------------------
