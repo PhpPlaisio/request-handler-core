@@ -101,45 +101,17 @@ class CoreRequestHandler implements RequestHandler
    */
   public function handleRequest(): void
   {
-    try
-    {
-      try
-      {
-        $this->prepare();
-      }
-      catch (\Throwable $exception)
-      {
-        $handler = Abc::$abc->getExceptionHandler();
-        $handler->handlePrepareException($exception);
-      }
+    $success = $this->prepare();
+    if (!$success) return;
 
-      try
-      {
-        $this->construct();
-      }
-      catch (\Throwable $exception)
-      {
-        $handler = Abc::$abc->getExceptionHandler();
-        $handler->handleConstructException($exception);
-      }
+    $success = $this->construct();
+    if (!$success) return;
 
-      $this->response();
-    }
-    catch (\Throwable $exception)
-    {
-      $handler = Abc::$abc->getExceptionHandler();
-      $handler->handleResponseException($exception);
-    }
+    $success = $this->response();
+    if (!$success) return;
 
-    try
-    {
-      $this->finalize();
-    }
-    catch (\Throwable $exception)
-    {
-      $handler = Abc::$abc->getExceptionHandler();
-      $handler->handleFinalizeException($exception);
-    }
+    $success = $this->finalize();
+    if (!$success) return;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -187,79 +159,143 @@ class CoreRequestHandler implements RequestHandler
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * Contruct phase: creating the Page object.
+   * Construct phase: creating the Page object.
+   *
+   * Returns true on success, otherwise false.
+   *
+   * @return bool
    */
-  private function construct(): void
+  private function construct(): bool
   {
-    $class      = Abc::$abc->pageInfo['pag_class'];
-    $this->page = new $class();
+    try
+    {
+      $class      = Abc::$abc->pageInfo['pag_class'];
+      $this->page = new $class();
+    }
+    catch (\Throwable $exception)
+    {
+      $handler = Abc::$abc->getExceptionHandler();
+      $handler->handleConstructException($exception);
+
+      return false;
+    }
+
+    return true;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * All action after generating the response by the Page object.
+   *
+   * Returns true on success, otherwise false.
+   *
+   * @return bool
    */
-  private function finalize(): void
+  private function finalize(): bool
   {
-    Abc::$requestLogger->logRequest(HttpHeader::$status);
-    Abc::$DL->commit();
+    try
+    {
+      Abc::$requestLogger->logRequest(HttpHeader::$status);
+      Abc::$DL->commit();
 
-    $this->adHocEventDispatcher->notify($this, 'post_commit');
+      $this->adHocEventDispatcher->notify($this, 'post_commit');
+    }
+    catch (\Throwable $exception)
+    {
+      $handler = Abc::$abc->getExceptionHandler();
+      $handler->handleFinalizeException($exception);
+
+      return false;
+    }
+
+    return true;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Preparation phase: all actions before creating the Page object.
+   *
+   * Returns true on success, otherwise false.
+   *
+   * @return bool
    */
-  private function prepare(): void
+  private function prepare(): bool
   {
-    Abc::$DL::begin();
+    try
+    {
+      Abc::$DL::begin();
 
-    // Get the CGI variables from a clean URL.
-    Abc::$requestParameterResolver->resolveRequestParameters();
+      // Get the CGI variables from a clean URL.
+      Abc::$requestParameterResolver->resolveRequestParameters();
 
-    // Retrieve the session or create an new session.
-    Abc::$session->start();
+      // Retrieve the session or create an new session.
+      Abc::$session->start();
 
-    // Initialize Babel.
-    Abc::$babel->setLanguage(Abc::$session->getLanId());
+      // Initialize Babel.
+      Abc::$babel->setLanguage(Abc::$session->getLanId());
 
-    // Test the user is authorized for the requested page.
-    $this->checkAuthorization();
+      // Test the user is authorized for the requested page.
+      $this->checkAuthorization();
 
-    Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
+      Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
+    }
+    catch (\Throwable $exception)
+    {
+      $handler = Abc::$abc->getExceptionHandler();
+      $handler->handlePrepareException($exception);
+
+      return false;
+    }
+
+    return true;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Response phase: generating the response by the Page object.
+   *
+   * Returns true on success, otherwise false.
+   *
+   * @return bool
    */
-  private function response(): void
+  private function response(): bool
   {
-    // Perform additional authorization and security checks.
-    $this->page->checkAuthorization();
-
-    // Test for preferred URI.
-    $uri = $this->page->getPreferredUri();
-    if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
+    try
     {
-      // The preferred URI differs from the requested URI.
-      throw new NotPreferredUrlException($uri);
+      // Perform additional authorization and security checks.
+      $this->page->checkAuthorization();
+
+      // Test for preferred URI.
+      $uri = $this->page->getPreferredUri();
+      if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
+      {
+        // The preferred URI differs from the requested URI.
+        throw new NotPreferredUrlException($uri);
+      }
+
+      // Echo the page content.
+      if (Abc::$request->isAjax())
+      {
+        $this->page->echoXhrResponse();
+      }
+      else
+      {
+        $this->page->echoPage();
+      }
+
+      $this->adHocEventDispatcher->notify($this, 'post_render');
+
+      Abc::$session->save();
+    }
+    catch (\Throwable $exception)
+    {
+      $handler = Abc::$abc->getExceptionHandler();
+      $handler->handleResponseException($exception);
+
+      return false;
     }
 
-    // Echo the page content.
-    if (Abc::$request->isAjax())
-    {
-      $this->page->echoXhrResponse();
-    }
-    else
-    {
-      $this->page->echoPage();
-    }
-
-    $this->adHocEventDispatcher->notify($this, 'post_render');
-
-    Abc::$session->save();
+    return true;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
