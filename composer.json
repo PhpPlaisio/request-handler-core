@@ -7,15 +7,14 @@
     "Handler",
     "Core"
   ],
-  "type": "library",
   "license": "MIT",
   "require": {
     "php": ">=7.1.0",
-    "setbased/abc": "*",
+    "setbased/abc": "^0.10.48",
     "setbased/abc-exception": "^1.1.0",
     "setbased/abc-http-header": "^2.0.0",
-    "setbased/abc-page": "*",
-    "setbased/abc-request-handler": "*"
+    "setbased/abc-page": "^0.9.2",
+    "setbased/abc-request-handler": "^0.9.1"
   },
   "require-dev": {
     "phing/phing": "^2.0.0"
