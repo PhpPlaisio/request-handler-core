@@ -185,7 +185,7 @@ class CoreRequestHandler implements RequestHandler
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * All action after generating the response by the Page object.
+   * All actions after generating the response by the Page object.
    *
    * Returns true on success, otherwise false.
    *
@@ -225,16 +225,12 @@ class CoreRequestHandler implements RequestHandler
     {
       Abc::$DL::begin();
 
-      // Get the CGI variables from a clean URL.
       Abc::$requestParameterResolver->resolveRequestParameters();
 
-      // Retrieve the session or create an new session.
       Abc::$session->start();
 
-      // Initialize Babel.
       Abc::$babel->setLanguage(Abc::$session->getLanId());
 
-      // Test the user is authorized for the requested page.
       $this->checkAuthorization();
 
       Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
@@ -262,26 +258,16 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      // Perform additional authorization and security checks.
       $this->page->checkAuthorization();
 
-      // Test for preferred URI.
       $uri = $this->page->getPreferredUri();
       if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
       {
-        // The preferred URI differs from the requested URI.
         throw new NotPreferredUrlException($uri);
       }
 
-      // Echo the page content.
-      if (Abc::$request->isAjax())
-      {
-        $this->page->echoXhrResponse();
-      }
-      else
-      {
-        $this->page->echoPage();
-      }
+      $response = $this->page->handleRequest();
+      $response->send();
 
       $this->adHocEventDispatcher->notify($this, 'post_render');
 
