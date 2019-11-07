@@ -13,7 +13,7 @@
     "setbased/abc": "^0.10.48",
     "setbased/abc-exception": "^1.1.0",
     "setbased/abc-http-header": "^2.0.0",
-    "setbased/abc-page": "^0.9.2",
+    "setbased/abc-page": "^1.0.0",
     "setbased/abc-request-handler": "^0.9.1"
   },
   "require-dev": {
