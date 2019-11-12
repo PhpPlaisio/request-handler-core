@@ -7,7 +7,6 @@ use SetBased\Abc\Abc;
 use SetBased\Abc\Exception\InvalidUrlException;
 use SetBased\Abc\Exception\NotAuthorizedException;
 use SetBased\Abc\Exception\NotPreferredUrlException;
-use SetBased\Abc\Helper\HttpHeader;
 use SetBased\Abc\Page\Page;
 use SetBased\Exception\FallenException;
 
@@ -195,7 +194,8 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      Abc::$requestLogger->logRequest(HttpHeader::$status);
+      $status = http_response_code();
+      Abc::$requestLogger->logRequest(is_int($status) ? $status : 0);
       Abc::$DL->commit();
 
       $this->adHocEventDispatcher->notify($this, 'post_commit');
