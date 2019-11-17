@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace SetBased\Abc\RequestHandler;
+namespace Plaisio\RequestHandler;
 
-use SetBased\Abc\Abc;
-use SetBased\Abc\Exception\InvalidUrlException;
-use SetBased\Abc\Exception\NotAuthorizedException;
-use SetBased\Abc\Exception\NotPreferredUrlException;
-use SetBased\Abc\Page\Page;
+use Plaisio\Exception\InvalidUrlException;
+use Plaisio\Exception\NotAuthorizedException;
+use Plaisio\Exception\NotPreferredUrlException;
+use Plaisio\Kernel\Nub;
+use Plaisio\Page\Page;
 use SetBased\Exception\FallenException;
 
 /**
@@ -120,13 +120,13 @@ class CoreRequestHandler implements RequestHandler
    */
   private function checkAuthorization(): void
   {
-    $pagId = Abc::$cgi->getOptId('pag', 'pag');
+    $pagId = Nub::$cgi->getOptId('pag', 'pag');
     if ($pagId===null)
     {
-      $pagAlias = Abc::$cgi->getOptString('pag_alias');
+      $pagAlias = Nub::$cgi->getOptString('pag_alias');
       if ($pagAlias===null)
       {
-        $pagId = Abc::$abc->getIndexPagId();
+        $pagId = Nub::$nub->getIndexPagId();
       }
     }
     else
@@ -134,10 +134,10 @@ class CoreRequestHandler implements RequestHandler
       $pagAlias = null;
     }
 
-    $info = Abc::$DL->abcAuthGetPageInfo(Abc::$companyResolver->getCmpId(),
+    $info = Nub::$DL->abcAuthGetPageInfo(Nub::$companyResolver->getCmpId(),
                                          $pagId,
-                                         Abc::$session->getProId(),
-                                         Abc::$session->getLanId(),
+                                         Nub::$session->getProId(),
+                                         Nub::$session->getLanId(),
                                          $pagAlias);
     if ($info===null)
     {
@@ -152,7 +152,7 @@ class CoreRequestHandler implements RequestHandler
       throw new NotAuthorizedException('Not authorized for requested page');
     }
 
-    Abc::$abc->pageInfo = $info;
+    Nub::$nub->pageInfo = $info;
     // Page does exists and the user agent is authorized.
   }
 
@@ -168,12 +168,12 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      $class      = Abc::$abc->pageInfo['pag_class'];
+      $class      = Nub::$nub->pageInfo['pag_class'];
       $this->page = new $class();
     }
     catch (\Throwable $exception)
     {
-      $handler = Abc::$abc->getExceptionHandler();
+      $handler = Nub::$nub->getExceptionHandler();
       $handler->handleConstructException($exception);
 
       return false;
@@ -195,14 +195,14 @@ class CoreRequestHandler implements RequestHandler
     try
     {
       $status = http_response_code();
-      Abc::$requestLogger->logRequest(is_int($status) ? $status : 0);
-      Abc::$DL->commit();
+      Nub::$requestLogger->logRequest(is_int($status) ? $status : 0);
+      Nub::$DL->commit();
 
       $this->adHocEventDispatcher->notify($this, 'post_commit');
     }
     catch (\Throwable $exception)
     {
-      $handler = Abc::$abc->getExceptionHandler();
+      $handler = Nub::$nub->getExceptionHandler();
       $handler->handleFinalizeException($exception);
 
       return false;
@@ -223,21 +223,21 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      Abc::$DL::begin();
+      Nub::$DL::begin();
 
-      Abc::$requestParameterResolver->resolveRequestParameters();
+      Nub::$requestParameterResolver->resolveRequestParameters();
 
-      Abc::$session->start();
+      Nub::$session->start();
 
-      Abc::$babel->setLanguage(Abc::$session->getLanId());
+      Nub::$babel->setLanguage(Nub::$session->getLanId());
 
       $this->checkAuthorization();
 
-      Abc::$assets->setPageTitle(Abc::$abc->pageInfo['pag_title']);
+      Nub::$assets->setPageTitle(Nub::$nub->pageInfo['pag_title']);
     }
     catch (\Throwable $exception)
     {
-      $handler = Abc::$abc->getExceptionHandler();
+      $handler = Nub::$nub->getExceptionHandler();
       $handler->handlePrepareException($exception);
 
       return false;
@@ -261,7 +261,7 @@ class CoreRequestHandler implements RequestHandler
       $this->page->checkAuthorization();
 
       $uri = $this->page->getPreferredUri();
-      if ($uri!==null && Abc::$request->getRequestUri()!==$uri)
+      if ($uri!==null && Nub::$request->getRequestUri()!==$uri)
       {
         throw new NotPreferredUrlException($uri);
       }
@@ -271,11 +271,11 @@ class CoreRequestHandler implements RequestHandler
 
       $this->adHocEventDispatcher->notify($this, 'post_render');
 
-      Abc::$session->save();
+      Nub::$session->save();
     }
     catch (\Throwable $exception)
     {
-      $handler = Abc::$abc->getExceptionHandler();
+      $handler = Nub::$nub->getExceptionHandler();
       $handler->handleResponseException($exception);
 
       return false;

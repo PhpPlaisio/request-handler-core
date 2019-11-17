@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace SetBased\Abc\RequestHandler;
+namespace Plaisio\RequestHandler;
 
 /**
  * A light weight dispatcher for ad hoc events.
@@ -102,7 +102,6 @@ class AdHocEventDispatcher
   }
 
   //--------------------------------------------------------------------------------------------------------------------
-
 }
 
 //----------------------------------------------------------------------------------------------------------------------
