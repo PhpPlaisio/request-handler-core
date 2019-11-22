@@ -1,8 +1,8 @@
 {
   "name": "plaisio/request-handler-core",
-  "description": "Plaisio: Core Request Handler",
+  "description": "PhpPlaisio: Core Request Handler",
   "keywords": [
-    "Plaisio",
+    "PhpPlaisio",
     "Request Handler",
     "Core"
   ],
