@@ -9,10 +9,10 @@
   "license": "MIT",
   "require": {
     "php": ">=7.3",
-    "plaisio/exception": "^1.0",
-    "plaisio/kernel": "^1.0",
-    "plaisio/page": "^1.0",
-    "plaisio/request-handler": "^1.0"
+    "plaisio/exception": "^1.1",
+    "plaisio/kernel": "^1.1",
+    "plaisio/page": "^1.1",
+    "plaisio/request-handler": "^1.1"
   },
   "require-dev": {
     "phing/phing": "^2.0"
