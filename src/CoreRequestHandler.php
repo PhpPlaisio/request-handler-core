@@ -134,7 +134,7 @@ class CoreRequestHandler implements RequestHandler
       $pagAlias = null;
     }
 
-    $info = Nub::$dl->abcAuthGetPageInfo(Nub::$companyResolver->getCmpId(),
+    $info = Nub::$DL->abcAuthGetPageInfo(Nub::$companyResolver->getCmpId(),
                                          $pagId,
                                          Nub::$session->getProId(),
                                          Nub::$session->getLanId(),
@@ -196,8 +196,8 @@ class CoreRequestHandler implements RequestHandler
     {
       $status = http_response_code();
       Nub::$requestLogger->logRequest(is_int($status) ? $status : 0);
-      Nub::$dl->commit();
-      Nub::$dl->disconnect();
+      Nub::$DL->commit();
+      Nub::$DL->disconnect();
 
       $this->adHocEventDispatcher->notify($this, 'post_commit');
     }
@@ -224,8 +224,8 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      Nub::$dl->connect();
-      Nub::$dl->begin();
+      Nub::$DL->connect();
+      Nub::$DL->begin();
 
       Nub::$requestParameterResolver->resolveRequestParameters();
 
