@@ -1,7 +1,8 @@
 <project name="PhpPlaisio" default="build" basedir=".">
     <!-- Run composer update and executes various other updates -->
     <target name="update">
-        <exec command="composer update" checkreturn="true" passthru="true"/>
+        <exec command="composer --ansi update" checkreturn="true" passthru="true"/>
+        <exec command="./bin/plaisio --ansi plaisio:data-layer-type-annotation SetBased\\Stratum\\MySql\\MySqlDataLayer" checkreturn="true" passthru="true"/>
     </target>
 
     <target name="build">
