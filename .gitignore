@@ -1,5 +1,4 @@
 /.idea/
-/bin/phing
-/bin/stratum
+/bin/
 /composer.lock
 /vendor/
