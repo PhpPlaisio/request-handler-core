@@ -38,6 +38,7 @@ class CoreRequestHandler implements RequestHandler
   private $page;
 
   //--------------------------------------------------------------------------------------------------------------------
+
   /**
    * CoreRequestHandler constructor.
    */
@@ -120,13 +121,13 @@ class CoreRequestHandler implements RequestHandler
    */
   private function checkAuthorization(): void
   {
-    $pagId = Nub::$cgi->getOptId('pag', 'pag');
+    $pagId = Nub::$nub->cgi->getOptId('pag', 'pag');
     if ($pagId===null)
     {
-      $pagAlias = Nub::$cgi->getOptString('pag_alias');
+      $pagAlias = Nub::$nub->cgi->getOptString('pag_alias');
       if ($pagAlias===null)
       {
-        $pagId = Nub::$nub->getIndexPagId();
+        $pagId = Nub::$nub->pagIdIndex;
       }
     }
     else
@@ -134,11 +135,11 @@ class CoreRequestHandler implements RequestHandler
       $pagAlias = null;
     }
 
-    $info = Nub::$DL->abcAuthGetPageInfo(Nub::$companyResolver->getCmpId(),
-                                         $pagId,
-                                         Nub::$session->getProId(),
-                                         Nub::$session->getLanId(),
-                                         $pagAlias);
+    $info = Nub::$nub->DL->abcAuthGetPageInfo(Nub::$nub->companyResolver->getCmpId(),
+                                              $pagId,
+                                              Nub::$nub->session->getProId(),
+                                              Nub::$nub->session->getLanId(),
+                                              $pagAlias);
     if ($info===null)
     {
       throw new InvalidUrlException('Page does not exists');
@@ -173,8 +174,7 @@ class CoreRequestHandler implements RequestHandler
     }
     catch (\Throwable $exception)
     {
-      $handler = Nub::$nub->getExceptionHandler();
-      $handler->handleConstructException($exception);
+      Nub::$nub->exceptionHandler->handleConstructException($exception);
 
       return false;
     }
@@ -195,16 +195,15 @@ class CoreRequestHandler implements RequestHandler
     try
     {
       $status = http_response_code();
-      Nub::$requestLogger->logRequest(is_int($status) ? $status : 0);
-      Nub::$DL->commit();
-      Nub::$DL->disconnect();
+      Nub::$nub->requestLogger->logRequest(is_int($status) ? $status : 0);
+      Nub::$nub->DL->commit();
+      Nub::$nub->DL->disconnect();
 
       $this->adHocEventDispatcher->notify($this, 'post_commit');
     }
     catch (\Throwable $exception)
     {
-      $handler = Nub::$nub->getExceptionHandler();
-      $handler->handleFinalizeException($exception);
+      Nub::$nub->exceptionHandler->handleFinalizeException($exception);
 
       return false;
     }
@@ -224,23 +223,22 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      Nub::$DL->connect();
-      Nub::$DL->begin();
+      Nub::$nub->DL->connect();
+      Nub::$nub->DL->begin();
 
-      Nub::$requestParameterResolver->resolveRequestParameters();
+      Nub::$nub->requestParameterResolver->resolveRequestParameters();
 
-      Nub::$session->start();
+      Nub::$nub->session->start();
 
-      Nub::$babel->setLanguage(Nub::$session->getLanId());
+      Nub::$nub->babel->setLanguage(Nub::$nub->session->getLanId());
 
       $this->checkAuthorization();
 
-      Nub::$assets->setPageTitle(Nub::$nub->pageInfo['pag_title']);
+      Nub::$nub->assets->setPageTitle(Nub::$nub->pageInfo['pag_title']);
     }
     catch (\Throwable $exception)
     {
-      $handler = Nub::$nub->getExceptionHandler();
-      $handler->handlePrepareException($exception);
+      Nub::$nub->exceptionHandler->handlePrepareException($exception);
 
       return false;
     }
@@ -263,7 +261,7 @@ class CoreRequestHandler implements RequestHandler
       $this->page->checkAuthorization();
 
       $uri = $this->page->getPreferredUri();
-      if ($uri!==null && Nub::$request->getRequestUri()!==$uri)
+      if ($uri!==null && Nub::$nub->request->getRequestUri()!==$uri)
       {
         throw new NotPreferredUrlException($uri);
       }
@@ -273,12 +271,11 @@ class CoreRequestHandler implements RequestHandler
 
       $this->adHocEventDispatcher->notify($this, 'post_render');
 
-      Nub::$session->save();
+      Nub::$nub->session->save();
     }
     catch (\Throwable $exception)
     {
-      $handler = Nub::$nub->getExceptionHandler();
-      $handler->handleResponseException($exception);
+      Nub::$nub->exceptionHandler->handleResponseException($exception);
 
       return false;
     }
