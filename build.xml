@@ -2,7 +2,14 @@
     <!-- Run composer update and executes various other updates -->
     <target name="update">
         <exec command="composer --ansi update" checkreturn="true" passthru="true"/>
-        <exec command="./bin/plaisio --ansi plaisio:data-layer-type-annotation SetBased\\Stratum\\MySql\\MySqlDataLayer" checkreturn="true" passthru="true"/>
+        <exec command="./bin/plaisio --ansi plaisio:kernel-data-layer-type SetBased\\Stratum\\MySql\\MySqlDataLayer" checkreturn="true" passthru="true"/>
+    </target>
+
+    <target name="kernel">
+        <exec executable="bin/plaisio" checkreturn="true" passthru="true">
+            <arg value="--ansi"/>
+            <arg value="plaisio:kernel-properties"/>
+        </exec>
     </target>
 
     <target name="build">

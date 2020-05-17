@@ -6,14 +6,15 @@ namespace Plaisio\RequestHandler;
 use Plaisio\Exception\InvalidUrlException;
 use Plaisio\Exception\NotAuthorizedException;
 use Plaisio\Exception\NotPreferredUrlException;
-use Plaisio\Kernel\Nub;
 use Plaisio\Page\Page;
+use Plaisio\PlaisioInterface;
+use Plaisio\PlaisioObject;
 use SetBased\Exception\FallenException;
 
 /**
  * Core request handler.
  */
-class CoreRequestHandler implements RequestHandler
+class CoreRequestHandler extends PlaisioObject implements RequestHandler
 {
   //--------------------------------------------------------------------------------------------------------------------
   /**
@@ -38,12 +39,15 @@ class CoreRequestHandler implements RequestHandler
   private $page;
 
   //--------------------------------------------------------------------------------------------------------------------
-
   /**
    * CoreRequestHandler constructor.
+   *
+   * @param PlaisioInterface $object The parent PhpPlaisio object.
    */
-  public function __construct()
+  public function __construct(PlaisioInterface $object)
   {
+    parent::__construct($object);
+
     $this->adHocEventDispatcher = new AdHocEventDispatcher();
   }
 
@@ -121,13 +125,13 @@ class CoreRequestHandler implements RequestHandler
    */
   private function checkAuthorization(): void
   {
-    $pagId = Nub::$nub->cgi->getOptId('pag', 'pag');
+    $pagId = $this->nub->cgi->getOptId('pag', 'pag');
     if ($pagId===null)
     {
-      $pagAlias = Nub::$nub->cgi->getOptString('pag_alias');
+      $pagAlias = $this->nub->cgi->getOptString('pag_alias');
       if ($pagAlias===null)
       {
-        $pagId = Nub::$nub->pagIdIndex;
+        $pagId = $this->nub->pagIdIndex;
       }
     }
     else
@@ -135,11 +139,11 @@ class CoreRequestHandler implements RequestHandler
       $pagAlias = null;
     }
 
-    $info = Nub::$nub->DL->abcAuthGetPageInfo(Nub::$nub->companyResolver->getCmpId(),
-                                              $pagId,
-                                              Nub::$nub->session->getProId(),
-                                              Nub::$nub->session->getLanId(),
-                                              $pagAlias);
+    $info = $this->nub->DL->abcAuthGetPageInfo($this->nub->company->cmpId,
+                                               $pagId,
+                                               $this->nub->session->proId,
+                                               $this->nub->babel->lanId,
+                                               $pagAlias);
     if ($info===null)
     {
       throw new InvalidUrlException('Page does not exists');
@@ -153,7 +157,7 @@ class CoreRequestHandler implements RequestHandler
       throw new NotAuthorizedException('Not authorized for requested page');
     }
 
-    Nub::$nub->pageInfo = $info;
+    $this->nub->pageInfo = $info;
     // Page does exists and the user agent is authorized.
   }
 
@@ -169,12 +173,12 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      $class      = Nub::$nub->pageInfo['pag_class'];
+      $class      = $this->nub->pageInfo['pag_class'];
       $this->page = new $class();
     }
     catch (\Throwable $exception)
     {
-      Nub::$nub->exceptionHandler->handleConstructException($exception);
+      $this->nub->exceptionHandler->handleConstructException($exception);
 
       return false;
     }
@@ -195,15 +199,15 @@ class CoreRequestHandler implements RequestHandler
     try
     {
       $status = http_response_code();
-      Nub::$nub->requestLogger->logRequest(is_int($status) ? $status : 0);
-      Nub::$nub->DL->commit();
-      Nub::$nub->DL->disconnect();
+      $this->nub->requestLogger->logRequest(is_int($status) ? $status : 0);
+      $this->nub->DL->commit();
+      $this->nub->DL->disconnect();
 
       $this->adHocEventDispatcher->notify($this, 'post_commit');
     }
     catch (\Throwable $exception)
     {
-      Nub::$nub->exceptionHandler->handleFinalizeException($exception);
+      $this->nub->exceptionHandler->handleFinalizeException($exception);
 
       return false;
     }
@@ -223,22 +227,22 @@ class CoreRequestHandler implements RequestHandler
   {
     try
     {
-      Nub::$nub->DL->connect();
-      Nub::$nub->DL->begin();
+      $this->nub->DL->connect();
+      $this->nub->DL->begin();
 
-      Nub::$nub->requestParameterResolver->resolveRequestParameters();
+      $this->nub->requestParameterResolver->resolveRequestParameters();
 
-      Nub::$nub->session->start();
+      $this->nub->session->start();
 
-      Nub::$nub->babel->setLanguage(Nub::$nub->session->getLanId());
+      $this->nub->babel->setLanguage($this->nub->session->getLanId());
 
       $this->checkAuthorization();
 
-      Nub::$nub->assets->setPageTitle(Nub::$nub->pageInfo['pag_title']);
+      $this->nub->assets->setPageTitle($this->nub->pageInfo['pag_title']);
     }
     catch (\Throwable $exception)
     {
-      Nub::$nub->exceptionHandler->handlePrepareException($exception);
+      $this->nub->exceptionHandler->handlePrepareException($exception);
 
       return false;
     }
@@ -261,7 +265,7 @@ class CoreRequestHandler implements RequestHandler
       $this->page->checkAuthorization();
 
       $uri = $this->page->getPreferredUri();
-      if ($uri!==null && Nub::$nub->request->getRequestUri()!==$uri)
+      if ($uri!==null && $this->nub->request->getRequestUri()!==$uri)
       {
         throw new NotPreferredUrlException($uri);
       }
@@ -271,11 +275,11 @@ class CoreRequestHandler implements RequestHandler
 
       $this->adHocEventDispatcher->notify($this, 'post_render');
 
-      Nub::$nub->session->save();
+      $this->nub->session->save();
     }
     catch (\Throwable $exception)
     {
-      Nub::$nub->exceptionHandler->handleResponseException($exception);
+      $this->nub->exceptionHandler->handleResponseException($exception);
 
       return false;
     }
