@@ -237,8 +237,6 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
       $this->nub->babel->setLanguage($this->nub->session->getLanId());
 
       $this->checkAuthorization();
-
-      $this->nub->assets->setPageTitle($this->nub->pageInfo['pag_title']);
     }
     catch (\Throwable $exception)
     {

@@ -21,7 +21,6 @@
     "plaisio/request-logger": "^1.2",
     "plaisio/request-parameter-resolver": "^1.2",
     "plaisio/session": "^3.0",
-    "plaisio/web-assets": "^1.2",
     "setbased/php-stratum-mysql": "^5.0"
   },
   "require-dev": {
