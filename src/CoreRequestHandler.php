@@ -9,6 +9,7 @@ use Plaisio\Exception\NotPreferredUrlException;
 use Plaisio\Page\Page;
 use Plaisio\PlaisioInterface;
 use Plaisio\PlaisioObject;
+use Plaisio\Response\Response;
 use SetBased\Exception\FallenException;
 
 /**
@@ -38,17 +39,33 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
    */
   private $page;
 
+  /**
+   * The response sent to the user agent.
+   *
+   * @var Response|null
+   */
+  private $response = null;
+
+  /**
+   * Whether to send the response as soon as possible to the user agent.
+   *
+   * @var bool
+   */
+  private $sendResponseAsap;
+
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * CoreRequestHandler constructor.
    *
-   * @param PlaisioInterface $object The parent PhpPlaisio object.
+   * @param PlaisioInterface $object           The parent PhpPlaisio object.
+   * @param bool             $sendResponseAsap Whether to send the response as soon as possible to the user agent.
    */
-  public function __construct(PlaisioInterface $object)
+  public function __construct(PlaisioInterface $object, bool $sendResponseAsap = false)
   {
     parent::__construct($object);
 
     $this->adHocEventDispatcher = new AdHocEventDispatcher();
+    $this->sendResponseAsap     = $sendResponseAsap;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -62,19 +79,19 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
    *                   committed. The listener CAN NOT access the database or session data.
    * </ul>
    *
-   * @param string   $event    The name of the event.
-   * @param callable $listener The listener that must be notified when the event occurs.
+   * @param int      $event    The ID of the event.
+   * @param callable $observer The observer that must be notified when the event occurs.
    *
    * @api
    * @since 1.0.0
    */
-  public function addListener(string $event, callable $listener): void
+  public function addListener(int $event, callable $observer): void
   {
     switch ($event)
     {
-      case 'post_render':
-      case 'post_commit':
-        $this->adHocEventDispatcher->addListener($this, $event, $listener);
+      case self::EVENT_END_RESPONSE:
+      case self::EVENT_END_FINALIZE:
+        $this->adHocEventDispatcher->addListener($event, $observer);
         break;
 
       default:
@@ -103,19 +120,21 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
    * @api
    * @since 1.0.0
    */
-  public function handleRequest(): void
+  public function handleRequest(): Response
   {
-    $success = $this->prepare();
-    if (!$success) return;
+    $success = true;
+    $success = $success && $this->prepare();
+    $success = $success && $this->construct();
+    $success = $success && $this->response();
+    $success = $success && $this->finalize();
+    unset($success);
 
-    $success = $this->construct();
-    if (!$success) return;
+    if (!$this->sendResponseAsap)
+    {
+      $this->response->send();
+    }
 
-    $success = $this->response();
-    if (!$success) return;
-
-    $success = $this->finalize();
-    if (!$success) return;
+    return $this->response;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -178,7 +197,8 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
     }
     catch (\Throwable $exception)
     {
-      $this->nub->exceptionHandler->handleConstructException($exception);
+      $response = $this->nub->exceptionHandler->handleConstructException($exception);
+      $this->setResponse($response);
 
       return false;
     }
@@ -198,16 +218,18 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   {
     try
     {
-      $status = http_response_code();
-      $this->nub->requestLogger->logRequest(is_int($status) ? $status : 0);
+      $this->nub->session->save();
+
+      $this->nub->requestLogger->logRequest($this->response->getStatus());
       $this->nub->DL->commit();
       $this->nub->DL->disconnect();
 
-      $this->adHocEventDispatcher->notify($this, 'post_commit');
+      $this->adHocEventDispatcher->notify(self::EVENT_END_FINALIZE);
     }
     catch (\Throwable $exception)
     {
-      $this->nub->exceptionHandler->handleFinalizeException($exception);
+      $response = $this->nub->exceptionHandler->handleFinalizeException($exception);
+      $this->setResponse($response);
 
       return false;
     }
@@ -240,7 +262,8 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
     }
     catch (\Throwable $exception)
     {
-      $this->nub->exceptionHandler->handlePrepareException($exception);
+      $response = $this->nub->exceptionHandler->handlePrepareException($exception);
+      $this->setResponse($response);
 
       return false;
     }
@@ -269,20 +292,35 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
       }
 
       $response = $this->page->handleRequest();
-      $response->send();
+      $this->setResponse($response);
 
-      $this->adHocEventDispatcher->notify($this, 'post_render');
-
-      $this->nub->session->save();
+      $this->adHocEventDispatcher->notify(self::EVENT_END_RESPONSE);
     }
     catch (\Throwable $exception)
     {
-      $this->nub->exceptionHandler->handleResponseException($exception);
+      $response = $this->nub->exceptionHandler->handleResponseException($exception);
+      $this->setResponse($response);
 
       return false;
     }
 
     return true;
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Sets the response to eb send to the user agent.
+   *
+   * @param Response $response The response.
+   */
+  private function setResponse(Response $response): void
+  {
+    $this->response = $response;
+
+    if ($this->sendResponseAsap)
+    {
+      $this->response->send();
+    }
   }
 
   //--------------------------------------------------------------------------------------------------------------------

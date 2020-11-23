@@ -31,6 +31,7 @@ class AdHocEventDispatcher
   private $queue;
 
   //--------------------------------------------------------------------------------------------------------------------
+
   /**
    * Object constructor.
    */
@@ -41,36 +42,28 @@ class AdHocEventDispatcher
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * @param object   $emitter  The object that emits the event.
-   * @param string   $event    The name of the event.
+   * @param int      $event    The ID of the event.
    * @param callable $callable The  callable that must be run when the vent occurs.
    */
-  public function addListener($emitter, string $event, callable $callable)
+  public function addListener(int $event, callable $callable)
   {
-    $id = \spl_object_hash($emitter);
-    if (!isset($this->listeners[$id]))
+    if (!isset($this->listeners[$event]))
     {
-      $this->listeners[$id] = [];
+      $this->listeners[$event] = [];
     }
 
-    if (!isset($this->listeners[$id][$event]))
-    {
-      $this->listeners[$id][$event] = [];
-    }
-
-    $this->listeners[$id][$event][] = $callable;
+    $this->listeners[$event][] = $callable;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Informs all listeners that an event has occurred.
    *
-   * @param object $emitter The object that emits the event.
-   * @param string $event   The name of the event.
+   * @param int $event The ID of the event.
    */
-  public function notify($emitter, string $event): void
+  public function notify(int $event): void
   {
-    $this->queue->enqueue(['id' => \spl_object_hash($emitter), 'emitter' => $emitter, 'event' => $event]);
+    $this->queue->enqueue($event);
     $this->dispatch();
   }
 
@@ -80,7 +73,6 @@ class AdHocEventDispatcher
    */
   private function dispatch(): void
   {
-    // Return immediately if this dispatcher is dispatching events already.
     if ($this->isRunning) return;
 
     $this->isRunning = true;
@@ -89,9 +81,9 @@ class AdHocEventDispatcher
     {
       $event = $this->queue->dequeue();
 
-      if (isset($this->listeners[$event['id']][$event['event']]))
+      if (isset($this->listeners[$event]))
       {
-        foreach ($this->listeners[$event['id']][$event['event']] as $callable)
+        foreach ($this->listeners[$event] as $callable)
         {
           call_user_func($callable);
         }

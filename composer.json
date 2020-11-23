@@ -13,15 +13,15 @@
     "plaisio/cgi": "^1.2",
     "plaisio/company-resolver": "^2.0",
     "plaisio/exception": "^1.1",
-    "plaisio/exception-handler": "^1.2",
+    "plaisio/exception-handler": "^2.0",
     "plaisio/kernel": "^3.1.1",
-    "plaisio/page": "^1.0",
-    "plaisio/request": "^0.11",
-    "plaisio/request-handler": "^1.1",
+    "plaisio/page": "^1.2",
+    "plaisio/request": "^0.11.1",
+    "plaisio/request-handler": "^2.0",
     "plaisio/request-logger": "^1.2",
     "plaisio/request-parameter-resolver": "^1.2",
     "plaisio/session": "^4.0",
-    "setbased/php-stratum-mysql": "^6.0"
+    "setbased/php-stratum-mysql": "^6.1"
   },
   "require-dev": {
     "phing/phing": "^2.0",
