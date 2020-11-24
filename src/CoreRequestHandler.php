@@ -21,17 +21,17 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   /**
    * Send the response as soon as possible. This option is the most performant.
    */
-  const C_SEND_RESPONSE_MODE_ASAP = 1;
+  const SEND_RESPONSE_MODE_ASAP = 1;
 
   /**
    * Send the response after the request has been finalized. This option is the default and the safest option.
    */
-  const C_SEND_RESPONSE_MODE_FINAL = 2;
+  const SEND_RESPONSE_MODE_FINAL = 2;
 
   /**
    * Do not send the response at all. This option is intended for testing purposes.
    */
-  const C_SEND_RESPONSE_MODE_NIL = 3;
+  const SEND_RESPONSE_MODE_NIL = 3;
 
   /**
    * The light weight event dispatcher.
@@ -80,7 +80,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
    *                                           <li> @see self::C_SEND_RESPONSE_MODE_NIL
    *                                           </ul>
    */
-  public function __construct(PlaisioInterface $object, int $sendResponseMode = self::C_SEND_RESPONSE_MODE_FINAL)
+  public function __construct(PlaisioInterface $object, int $sendResponseMode = self::SEND_RESPONSE_MODE_FINAL)
   {
     parent::__construct($object);
 
@@ -149,7 +149,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
     $success = $success && $this->finalize();
     unset($success);
 
-    if (!$this->sendResponseMode===self::C_SEND_RESPONSE_MODE_FINAL)
+    if (!$this->sendResponseMode===self::SEND_RESPONSE_MODE_FINAL)
     {
       $this->response->send();
     }
@@ -337,7 +337,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   {
     $this->response = $response;
 
-    if ($this->sendResponseMode===self::C_SEND_RESPONSE_MODE_ASAP)
+    if ($this->sendResponseMode===self::SEND_RESPONSE_MODE_ASAP)
     {
       $this->response->send();
     }
