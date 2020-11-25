@@ -149,7 +149,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
     $success = $success && $this->finalize();
     unset($success);
 
-    if (!$this->sendResponseMode===self::SEND_RESPONSE_MODE_FINAL)
+    if ($this->sendResponseMode===self::SEND_RESPONSE_MODE_FINAL)
     {
       $this->response->send();
     }
