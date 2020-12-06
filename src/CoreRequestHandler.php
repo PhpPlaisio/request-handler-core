@@ -38,35 +38,35 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
    *
    * @var AdHocEventDispatcher
    */
-  private $adHocEventDispatcher;
+  private AdHocEventDispatcher $adHocEventDispatcher;
 
   /**
    * The ID of the page currently requested.
    *
    * @var int|null
    */
-  private $pagId;
+  private ?int $pagId = null;
 
   /**
    * The page object.
    *
-   * @var Page
+   * @var Page|null
    */
-  private $page;
+  private ?Page $page = null;
 
   /**
    * The response sent to the user agent.
    *
    * @var Response|null
    */
-  private $response = null;
+  private ?Response $response = null;
 
   /**
    * The mode for sending the response to the user agent.
    *
    * @var int
    */
-  private $sendResponseMode;
+  private int $sendResponseMode;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**

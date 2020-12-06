@@ -14,24 +14,23 @@ class AdHocEventDispatcher
    *
    * @var bool
    */
-  private $isRunning = false;
+  private bool $isRunning = false;
 
   /**
    * The listeners for events.
    *
    * @var array
    */
-  private $listeners = [];
+  private array $listeners = [];
 
   /**
    * The event queue.
    *
    * @var \SplQueue
    */
-  private $queue;
+  private \SplQueue $queue;
 
   //--------------------------------------------------------------------------------------------------------------------
-
   /**
    * Object constructor.
    */

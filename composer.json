@@ -8,8 +8,8 @@
   ],
   "license": "MIT",
   "require": {
-    "php": ">=7.3",
-    "plaisio/babel": "^2.0",
+    "php": ">=7.4",
+    "plaisio/babel": "^2.0.1",
     "plaisio/cgi": "^1.2",
     "plaisio/company-resolver": "^2.0",
     "plaisio/exception": "^1.1",
@@ -24,8 +24,8 @@
     "setbased/php-stratum-mysql": "^6.1"
   },
   "require-dev": {
-    "phing/phing": "^2.0",
-    "plaisio/console": "^2.0.1"
+    "phing/phing": "^2.16.3",
+    "plaisio/console": "^2.4.6"
   },
   "autoload": {
     "psr-4": {
