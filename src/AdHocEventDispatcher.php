@@ -4,13 +4,13 @@ declare(strict_types=1);
 namespace Plaisio\RequestHandler;
 
 /**
- * A light weight dispatcher for ad hoc events.
+ * A lightweight dispatcher for ad hoc events.
  */
 class AdHocEventDispatcher
 {
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * True if ans only if this dispatcher is dispatching events.
+   * Whether this dispatcher is dispatching events right now.
    *
    * @var bool
    */
@@ -42,9 +42,9 @@ class AdHocEventDispatcher
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * @param int      $event    The ID of the event.
-   * @param callable $callable The  callable that must be run when the vent occurs.
+   * @param callable $callable The callable that must be run when the vent occurs.
    */
-  public function addListener(int $event, callable $callable)
+  public function addListener(int $event, callable $callable): void
   {
     if (!isset($this->listeners[$event]))
     {
@@ -56,7 +56,7 @@ class AdHocEventDispatcher
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * Informs all listeners that an event has occurred.
+   * Notifies all listeners that an event has occurred.
    *
    * @param int $event The ID of the event.
    */

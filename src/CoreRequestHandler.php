@@ -34,7 +34,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   const SEND_RESPONSE_MODE_NIL = 3;
 
   /**
-   * The light weight event dispatcher.
+   * The lightweight event dispatcher.
    *
    * @var AdHocEventDispatcher
    */
@@ -142,8 +142,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
    */
   public function handleRequest(): Response
   {
-    $success = true;
-    $success = $success && $this->prepare();
+    $success = $this->prepare();
     $success = $success && $this->construct();
     $success = $success && $this->response();
     $success = $success && $this->finalize();
@@ -192,12 +191,12 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
 
     if ($info['authorized']==0)
     {
-      // Requested page does exists but the user agent is not authorized for the requested page.
+      // Requested page does exist but the user agent is not authorized for the requested page.
       throw new NotAuthorizedException('Not authorized for requested page');
     }
 
     $this->nub->pageInfo = $info;
-    // Page does exists and the user agent is authorized.
+    // Page does exist and the user agent is authorized.
   }
 
   //--------------------------------------------------------------------------------------------------------------------
