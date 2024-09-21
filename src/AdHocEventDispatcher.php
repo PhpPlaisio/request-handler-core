@@ -72,7 +72,10 @@ class AdHocEventDispatcher
    */
   private function dispatch(): void
   {
-    if ($this->isRunning) return;
+    if ($this->isRunning)
+    {
+      return;
+    }
 
     $this->isRunning = true;
 

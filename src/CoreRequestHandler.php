@@ -184,15 +184,15 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
                                                $pagAlias);
     if ($info===null)
     {
-      throw new InvalidUrlException('Page does not exists');
+      throw new InvalidUrlException('Page does not exist.');
     }
 
     $this->pagId = $info['pag_id'];
 
-    if ($info['authorized']==0)
+    if ($info['authorized']===0)
     {
       // Requested page does exist but the user agent is not authorized for the requested page.
-      throw new NotAuthorizedException('Not authorized for requested page');
+      throw new NotAuthorizedException('Not authorized for requested page.');
     }
 
     $this->nub->pageInfo = $info;
