@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Plaisio\RequestHandler;
 
+use Plaisio\C;
 use Plaisio\Exception\InvalidUrlException;
 use Plaisio\Exception\NotAuthorizedException;
 use Plaisio\Exception\NotPreferredUrlException;
@@ -170,6 +171,10 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
       if ($pagAlias===null)
       {
         $pagId = $this->nub->pagIdIndex;
+      }
+      elseif (mb_strlen($pagAlias)>C::LEN_PAG_ALIAS)
+      {
+        throw new InvalidUrlException('Page alias too long.');
       }
     }
     else
