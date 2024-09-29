@@ -22,17 +22,17 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   /**
    * Send the response as soon as possible. This option is the most performant.
    */
-  const SEND_RESPONSE_MODE_ASAP = 1;
+  public const int SEND_RESPONSE_MODE_ASAP = 1;
 
   /**
    * Send the response after the request has been finalized. This option is the default and the safest option.
    */
-  const SEND_RESPONSE_MODE_FINAL = 2;
+  public const int  SEND_RESPONSE_MODE_FINAL = 2;
 
   /**
    * Do not send the response at all. This option is intended for testing purposes.
    */
-  const SEND_RESPONSE_MODE_NIL = 3;
+  public const int  SEND_RESPONSE_MODE_NIL = 3;
 
   /**
    * The lightweight event dispatcher.
@@ -310,7 +310,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
       $this->page->checkAuthorization();
 
       $uri = $this->page->getPreferredUri();
-      if ($uri!==null && $this->nub->request->getRequestUri()!==$uri)
+      if ($uri!==null && $this->nub->request->requestUri!==$uri)
       {
         throw new NotPreferredUrlException($uri);
       }
