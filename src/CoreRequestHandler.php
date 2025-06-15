@@ -97,7 +97,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
    * <ul>
    * <li> post_render: This event occurs after a page requested has been successfully handled.
    * <li> post_commit: This event occurs after a page requested has been handled and the database transaction has been
-   *                   committed. The listener CAN NOT access the database or session data.
+   *                   committed. The listener CANNOT access the database or session data.
    * </ul>
    *
    * @param int      $event    The ID of the event.
@@ -123,8 +123,6 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Returns the ID of the page currently requested.
-   *
-   * @return int|null
    *
    * @api
    * @since 1.0.0
@@ -189,7 +187,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
                                                $pagAlias);
     if ($info===null)
     {
-      throw new InvalidUrlException('Page does not exist.');
+      throw new InvalidUrlException('The requested page does not exist.');
     }
 
     $this->pagId = $info['pag_id'];
@@ -197,7 +195,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
     if ($info['authorized']===0)
     {
       // Requested page does exist but the user agent is not authorized for the requested page.
-      throw new NotAuthorizedException('Not authorized for requested page.');
+      throw new NotAuthorizedException('Not authorized for the requested page.');
     }
 
     $this->nub->pageInfo = $info;
@@ -208,9 +206,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   /**
    * Construct phase: creating the Page object.
    *
-   * Returns true on success, otherwise false.
-   *
-   * @return bool
+   * Returns whether this phase was successfully executed.
    */
   private function construct(): bool
   {
@@ -234,9 +230,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   /**
    * All actions after generating the response by the Page object.
    *
-   * Returns true on success, otherwise false.
-   *
-   * @return bool
+   * Returns whether this phase was successfully executed.
    */
   private function finalize(): bool
   {
@@ -265,9 +259,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   /**
    * Preparation phase: all actions before creating the Page object.
    *
-   * Returns true on success, otherwise false.
-   *
-   * @return bool
+   * Returns whether this phase was successfully executed.
    */
   private function prepare(): bool
   {
@@ -296,9 +288,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
   /**
    * Response phase: generating the response by the Page object.
    *
-   * Returns true on success, otherwise false.
-   *
-   * @return bool
+   * Returns whether this phase was successfully executed.
    */
   private function response(): bool
   {
@@ -330,7 +320,7 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * Sets the response to eb send to the user agent.
+   * Sets the response to be sent to the user agent.
    *
    * @param Response $response The response.
    */
