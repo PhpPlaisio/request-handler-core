@@ -268,7 +268,6 @@ class CoreRequestHandler extends PlaisioObject implements RequestHandler
       $this->nub->DL->connect();
       $this->nub->DL->begin();
       $this->nub->request->validate();
-      $this->nub->requestParameterResolver->resolveRequestParameters();
       $this->nub->session->start();
       $this->nub->babel->setLanguage($this->nub->session->getLanId());
       $this->checkAuthorization();
